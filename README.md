@@ -14,17 +14,48 @@ This project follows DDD principles with clear separation of concerns:
 ## Project Structure
 
 ```
-ddd-crud-server/
-├── cmd/server/                 # Application entry point
-├── configs/                    # Configuration management
-├── internal/
-│   ├── domain/                 # Business logic
-│   ├── application/            # Use cases
-│   └── infrastructure/         # External concerns
-├── pkg/                        # Shared utilities
-├── Dockerfile                  # Docker configuration
-├── Makefile                    # Build automation
-└── README.md
+ddd-golang/
+  ├── cmd/
+  │   └── server/
+  │       └── main.go
+  ├── configs/
+  │   └── config.go
+  ├── internal/
+  │   ├── application/
+  │   │   ├── dto/
+  │   │   │   ├── request_dto.go
+  │   │   │   └── user_dto.go
+  │   │   └── service/
+  │   │       └── user_service.go
+  │   ├── domain/
+  │   │   ├── entity/
+  │   │   │   └── user.go
+  │   │   └── repository/
+  │   │       └── user_repository.go
+  │   └── infrastructure/
+  │       ├── database/
+  │       │   └── postgres.go
+  │       ├── handler/
+  │       │   └── user_handler.go
+  │       ├── repository/
+  │       │   └── user_repository.go
+  │       └── web/
+  │           ├── error_handler.go
+  │           ├── middleware/
+  │           │   ├── cors.go
+  │           │   └── logger.go
+  │           └── routes.go
+  ├── pkg/
+  │   ├── logger/
+  │   │   └── logger.go
+  │   ├── utils/
+  │   │   └── response.go
+  │   └── validator/
+  │       └── validator.go
+  ├── go.mod
+  ├── go.sum
+  ├── Makefile
+  └── README.md
 ```
 
 ## Features
