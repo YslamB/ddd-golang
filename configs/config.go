@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -32,25 +33,28 @@ func LoadConfig() (*Config, error) {
 
 	config := &Config{
 		Server: ServerConfig{
-			Port: getEnv("PORT", "8080"),
-			Env:  getEnv("ENV", "development"),
+			Port: getEnv("PORT"),
+			Env:  getEnv("ENV"),
 		},
 		Database: DatabaseConfig{
-			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "5432"),
-			User:     getEnv("DB_USER", "postgres"),
-			Password: getEnv("DB_PASSWORD", "password"),
-			DBName:   getEnv("DB_NAME", "ddd_crud"),
-			SSLMode:  getEnv("DB_SSLMODE", "disable"),
+			Host:     getEnv("DB_HOST"),
+			Port:     getEnv("DB_PORT"),
+			User:     getEnv("DB_USER"),
+			Password: getEnv("DB_PASSWORD"),
+			DBName:   getEnv("DB_NAME"),
+			SSLMode:  getEnv("DB_SSLMODE"),
 		},
 	}
 
 	return config, nil
 }
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+func getEnv(key string) string {
+	value := os.Getenv(key)
+
+	if value == "" {
+		log.Fatalf("%s: Not in .env file", key)
 	}
-	return defaultValue
+
+	return value
 }
