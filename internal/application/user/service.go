@@ -4,47 +4,32 @@ import (
 	"context"
 	"fmt"
 
-	"gddd/internal/application/user/dtos" // Import DTOs
+	"gddd/internal/application/user/dtos"
 	domain_common "gddd/internal/domain/common"
-	domain_user "gddd/internal/domain/user" // Import domain package
-	infra_logging "gddd/internal/infrastructure/logging"
+	domain_user "gddd/internal/domain/user"
+	"gddd/internal/infrastructure/logging"
 	shared_validation "gddd/internal/shared/validation"
 
 	"github.com/google/uuid"
 )
 
-// UserRepository defines the interface for the user repository,
-// used by the application service. This is a copy of the domain interface
-// to explicitly define application layer dependencies.
-// type UserRepository interface {
-// 	Save(ctx context.Context, user *domain_user.User) error
-// 	FindByID(ctx context.Context, id domain_user.UserID) (*domain_user.User, error)
-// 	FindByEmail(ctx context.Context, email string) (*domain_user.User, error)
-// 	Delete(ctx context.Context, id domain_user.UserID) error
-// }
-
-// Service defines the application service for user-related operations.
 type Service struct {
 	userRepo domain_user.Repository
-	logger   *infra_logging.Logger
+	logger   *logging.Logger
 }
 
-// NewService creates a new user application service.
-func NewService(userRepo domain_user.Repository, logger *infra_logging.Logger) *Service {
-	return &Service{userRepo: userRepo, logger: logger}
+func NewService(userRepo domain_user.Repository, log *logging.Logger) *Service {
+	return &Service{userRepo: userRepo, logger: log}
 }
 
-// RegisterUser handles the user registration use case.
 func (s *Service) RegisterUser(ctx context.Context, req dtos.RegisterUserRequest) (*dtos.UserResponse, error) {
 	s.logger.Infof("Attempting to register user with email: %s", req.Email)
 
-	// 1. Validate input using shared validation utility
 	if err := shared_validation.ValidateStruct(req); err != nil {
 		s.logger.Warnf("Validation error for user registration: %v", err)
 		return nil, domain_common.NewValidationError(err.Error())
 	}
 
-	// 2. Check if user already exists
 	existingUser, err := s.userRepo.FindByEmail(ctx, req.Email)
 	if err != nil && !domain_common.IsNotFoundError(err) {
 		s.logger.Errorf("Failed to check existing user by email %s: %v", req.Email, err)
@@ -55,14 +40,12 @@ func (s *Service) RegisterUser(ctx context.Context, req dtos.RegisterUserRequest
 		return nil, domain_common.NewConflictError("user with this email already exists")
 	}
 
-	// 3. Hash password (infrastructure concern, but done here for simplicity)
-	hashedPassword, err := hashPassword(req.Password) // Placeholder for actual hashing
+	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		s.logger.Errorf("Failed to hash password for email %s: %v", req.Email, err)
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	// 4. Create domain entity
 	newUserID := domain_user.UserID(uuid.New().String())
 	newUser, err := domain_user.NewUser(newUserID, req.Email, hashedPassword)
 	if err != nil {
@@ -70,7 +53,6 @@ func (s *Service) RegisterUser(ctx context.Context, req dtos.RegisterUserRequest
 		return nil, fmt.Errorf("failed to create new user domain entity: %w", err)
 	}
 
-	// 5. Persist domain entity
 	if err := s.userRepo.Save(ctx, newUser); err != nil {
 		s.logger.Errorf("Failed to save user %s: %v", newUser.ID, err)
 		return nil, fmt.Errorf("failed to save user: %w", err)
@@ -78,7 +60,6 @@ func (s *Service) RegisterUser(ctx context.Context, req dtos.RegisterUserRequest
 
 	s.logger.Infof("User %s registered successfully.", newUser.ID)
 
-	// 6. Return response DTO
 	return &dtos.UserResponse{
 		ID:        string(newUser.ID),
 		Email:     newUser.Email,
@@ -86,7 +67,6 @@ func (s *Service) RegisterUser(ctx context.Context, req dtos.RegisterUserRequest
 	}, nil
 }
 
-// GetUserByID handles retrieving a user by ID use case.
 func (s *Service) GetUserByID(ctx context.Context, id string) (*dtos.UserResponse, error) {
 	s.logger.Infof("Attempting to get user by ID: %s", id)
 
@@ -109,7 +89,6 @@ func (s *Service) GetUserByID(ctx context.Context, id string) (*dtos.UserRespons
 	}, nil
 }
 
-// UpdateUser handles updating a user's details use case.
 func (s *Service) UpdateUser(ctx context.Context, id string, req dtos.UpdateUserRequest) (*dtos.UserResponse, error) {
 	s.logger.Infof("Attempting to update user %s", id)
 
@@ -130,7 +109,7 @@ func (s *Service) UpdateUser(ctx context.Context, id string, req dtos.UpdateUser
 	}
 
 	if req.Email != "" && req.Email != user.Email {
-		// Check if new email conflicts with existing user
+
 		existingUserWithNewEmail, err := s.userRepo.FindByEmail(ctx, req.Email)
 		if err != nil && !domain_common.IsNotFoundError(err) {
 			s.logger.Errorf("Failed to check for conflicting email %s during update: %v", req.Email, err)
@@ -171,7 +150,6 @@ func (s *Service) UpdateUser(ctx context.Context, id string, req dtos.UpdateUser
 	}, nil
 }
 
-// DeleteUser handles deleting a user use case.
 func (s *Service) DeleteUser(ctx context.Context, id string) error {
 	s.logger.Infof("Attempting to delete user: %s", id)
 
@@ -190,9 +168,7 @@ func (s *Service) DeleteUser(ctx context.Context, id string) error {
 	return nil
 }
 
-// Placeholder for a password hashing function.
-// In a real application, use bcrypt or similar for secure hashing.
 func hashPassword(password string) (string, error) {
-	// For production, use a strong hashing library like golang.org/x/crypto/bcrypt
+
 	return "hashed_" + password, nil
 }

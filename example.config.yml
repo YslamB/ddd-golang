@@ -1,0 +1,21 @@
+is_debug: 
+
+listen:
+  host: 
+  port: 
+  bind_ip: 
+
+storage:
+  psql:
+    host: 
+    port: 
+    database: 
+    username: 
+    password: 
+    max_connection_pool_size: 
+    max_connection_lifetime_minutes: 
+    connection_acquisition_timeout: 
+    
+log:
+  path: 
+  filename: 

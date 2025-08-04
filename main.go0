@@ -1,0 +1,113 @@
+// package main
+
+// import (
+// 	"context"
+// 	"os"
+// 	"os/signal"
+// 	"syscall"
+// 	"time"
+
+// 	"github.com/gofiber/fiber/v2"
+// 	"github.com/gofiber/fiber/v2/middleware/logger"
+
+// 	app_product "gddd/internal/application/product"
+// 	app_user "gddd/internal/application/user"
+// 	domain_user "gddd/internal/domain/user"
+// 	infra_config "gddd/internal/infrastructure/config"
+// 	infra_logging "gddd/internal/infrastructure/logging"
+// 	infra_inmemory "gddd/internal/infrastructure/persistence/inmemory" // For in-memory repos
+// 	infra_postgres "gddd/internal/infrastructure/persistence/postgres" // For Postgres repos
+// 	"gddd/internal/infrastructure/storage"
+// 	"gddd/internal/infrastructure/web"
+// 	http_interfaces "gddd/internal/interfaces/http"
+
+// 	fiber_recover "github.com/gofiber/fiber/v2/middleware/recover"
+// )
+
+// func main() {
+// 	appLogger := infra_logging.NewLogger(os.Stdout)
+// 	cfg := infra_config.Init()
+// 	db := storage.PostgresInit(cfg)
+// 	defer db.Close()
+
+// 	appLogger.Infof("Successfully connected to database!")
+
+// 	// Choose repository implementation based on config or environment
+// 	var userRepo domain_user.Repository
+// 	var productRepo app_product.ProductRepository
+
+// 	if cfg.Storage.MemoryRepo {
+// 		appLogger.Infof("Using in-memory repositories.")
+// 		userRepo = infra_inmemory.NewInMemoryUserRepository()
+// 		productRepo = infra_inmemory.NewInMemoryProductRepository()
+// 	} else {
+// 		appLogger.Infof("Using PostgreSQL repositories.")
+// 		userRepo = infra_postgres.NewPostgresUserRepository(db)
+// 		productRepo = infra_postgres.NewPostgresProductRepository(db)
+// 	}
+
+// 	// Initialize Application Services
+// 	userService := app_user.NewService(userRepo, appLogger)
+// 	productService := app_product.NewService(productRepo, appLogger)
+
+// 	// Initialize Fiber App
+// 	app := fiber.New(fiber.Config{
+// 		ReadTimeout:  cfg.Listen.ReadTimeout,
+// 		WriteTimeout: cfg.Listen.WriteTimeout,
+// 		IdleTimeout:  cfg.Listen.IDLETimeout,
+// 		ErrorHandler: web.ErrorHandler,
+// 	})
+
+// 	// Add Fiber Middleware
+// 	app.Use(fiber_recover.New())      // Recovers from panics and sends 500
+// 	app.Use(logger.New(logger.Config{ // Request logger
+// 		Format: "[${time}] ${ip} ${status} - ${method} ${path} ${latency}\n",
+// 		Output: os.Stdout,
+// 	}))
+
+// 	// Initialize HTTP Handlers
+// 	userHandler := http_interfaces.NewUserHandler(userService, appLogger)
+// 	productHandler := http_interfaces.NewProductHandler(productService, appLogger)
+
+// 	// Setup HTTP Routes
+// 	apiV1 := app.Group("/api/v1")
+// 	{
+// 		// User routes
+// 		apiV1.Post("/auth/register", userHandler.RegisterUser)
+// 		apiV1.Get("/users/:id", userHandler.GetUserByID)
+// 		apiV1.Put("/users/:id", userHandler.UpdateUser)
+// 		apiV1.Delete("/users/:id", userHandler.DeleteUser)
+
+// 		// Product routes
+// 		apiV1.Post("/products", productHandler.CreateProduct)
+// 		apiV1.Get("/products/:id", productHandler.GetProductByID)
+// 		apiV1.Put("/products/:id", productHandler.UpdateProduct)
+// 		apiV1.Delete("/products/:id", productHandler.DeleteProduct)
+// 	}
+
+// 	// Start server in a goroutine
+// 	go func() {
+// 		port := os.Getenv("PORT")
+// 		if port == "" {
+// 			port = cfg.Listen.Port // Use configured port
+// 		}
+// 		appLogger.Infof("Server starting on port %s", port)
+// 		if err := app.Listen(":" + port); err != nil {
+// 			appLogger.Fatalf("Server failed to start: %v", err)
+// 		}
+// 	}()
+
+// 	// Graceful Shutdown
+// 	c := make(chan os.Signal, 1)
+// 	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // Listen for OS signals
+// 	<-c                                             // Block until a signal is received
+// 	appLogger.Infof("Shutting down server...")
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Give 10 seconds for graceful shutdown
+// 	defer cancel()
+
+// 	if err := app.ShutdownWithContext(ctx); err != nil {
+// 		appLogger.Fatalf("Server forced to shutdown: %v", err)
+// 	}
+// 	appLogger.Infof("Server exited gracefully.")
+// }

@@ -2,13 +2,15 @@ package logging
 
 import (
 	"fmt"
+	"gddd/internal/infrastructure/config"
 	"io"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/rs/zerolog"
 )
 
-// LogLevel defines the severity of a log message.
 type LogLevel int
 
 const (
@@ -19,7 +21,6 @@ const (
 	LevelFatal
 )
 
-// String returns the string representation of a LogLevel.
 func (l LogLevel) String() string {
 	switch l {
 	case LevelDebug:
@@ -37,65 +38,94 @@ func (l LogLevel) String() string {
 	}
 }
 
-// Logger provides a simple, opinionated logging interface.
 type Logger struct {
-	mu        sync.Mutex
-	stdLogger *log.Logger
-	minLevel  LogLevel
+	mu       sync.Mutex
+	zerolog  zerolog.Logger
+	minLevel LogLevel
 }
 
-// NewLogger creates a new Logger instance.
-// output is the io.Writer where log messages will be written (e.g., os.Stdout, a file).
-// minLevel sets the minimum level for messages to be logged.
+func InitLogger(cfg *config.Config) *Logger {
+	var logOutput io.Writer
+	if cfg.IsDebug {
+		logOutput = os.Stdout
+		fmt.Println("Application running in DEBUG mode. Logs will be printed to terminal.")
+	} else {
+
+		if err := os.MkdirAll(cfg.Log.Path, 0755); err != nil {
+			log.Fatalf("Failed to create log directory: %v", err)
+		}
+
+		logFile, err := os.OpenFile(fmt.Sprintf("%s/%s", cfg.Log.Path, cfg.Log.Filename), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("Failed to open log file: %v", err)
+		}
+		defer func() {
+			if err := logFile.Close(); err != nil {
+				log.Printf("Error closing log file: %v", err)
+			}
+		}()
+		logOutput = logFile
+		fmt.Println("Application running in RELEASE mode. Logs will be written to 'logs/app.log'.")
+	}
+
+	return NewLogger(logOutput)
+}
+
 func NewLogger(output io.Writer) *Logger {
+
+	zl := zerolog.New(output).With().Timestamp().Logger()
+
 	return &Logger{
-		stdLogger: log.New(output, "", log.Ldate|log.Ltime|log.Lshortfile),
-		minLevel:  LevelInfo, // Default minimum level
+		zerolog:  zl,
+		minLevel: LevelInfo,
 	}
 }
 
-// SetMinLevel sets the minimum log level for the logger.
 func (l *Logger) SetMinLevel(level LogLevel) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.minLevel = level
+
 }
 
-// logf formats and writes a log message if its level meets the minimum level.
 func (l *Logger) logf(level LogLevel, format string, v ...interface{}) {
 	if level < l.minLevel {
 		return
 	}
 
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	prefix := fmt.Sprintf("[%s] ", level.String())
-	l.stdLogger.Output(3, prefix+fmt.Sprintf(format, v...)) // 3 skips logf, log functions themselves
+	switch level {
+	case LevelDebug:
+		l.zerolog.Debug().Msgf(format, v...)
+	case LevelInfo:
+		l.zerolog.Info().Msgf(format, v...)
+	case LevelWarn:
+		l.zerolog.Warn().Msgf(format, v...)
+	case LevelError:
+		l.zerolog.Error().Msgf(format, v...)
+	case LevelFatal:
+		l.zerolog.Fatal().Msgf(format, v...)
+	default:
+		l.zerolog.Info().Msgf(format, v...)
+	}
 }
 
-// Debugf logs a debug message.
 func (l *Logger) Debugf(format string, v ...interface{}) {
 	l.logf(LevelDebug, format, v...)
 }
 
-// Infof logs an info message.
 func (l *Logger) Infof(format string, v ...interface{}) {
 	l.logf(LevelInfo, format, v...)
 }
 
-// Warnf logs a warning message.
 func (l *Logger) Warnf(format string, v ...interface{}) {
 	l.logf(LevelWarn, format, v...)
 }
 
-// Errorf logs an error message.
 func (l *Logger) Errorf(format string, v ...interface{}) {
 	l.logf(LevelError, format, v...)
 }
 
-// Fatalf logs a fatal message and then exits the application.
 func (l *Logger) Fatalf(format string, v ...interface{}) {
 	l.logf(LevelFatal, format, v...)
-	os.Exit(1)
+
 }
