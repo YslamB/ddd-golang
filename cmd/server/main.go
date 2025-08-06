@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"gddd/internal/infrastructure/config"
 	infra_logging "gddd/internal/infrastructure/logging"
-	"gddd/internal/infrastructure/storage"
-	"gddd/internal/infrastructure/web"
+	infra_store "gddd/internal/infrastructure/storage"
+	infra_web "gddd/internal/infrastructure/web"
+	"gddd/internal/shared/utils"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,27 +18,21 @@ import (
 
 func main() {
 	cfg := config.Init()
-
 	log := infra_logging.InitLogger(cfg)
-	psqlConn := storage.PostgresInit(cfg)
-
+	ctxTimeOut, cancel := context.WithTimeout(context.Background(), cfg.Listen.DBCtxTimeout)
+	psqlConn := infra_store.PostgresInit(&ctxTimeOut, cfg, log)
+	defer cancel()
 	defer psqlConn.Close()
-
-	app := fiber.New(fiber.Config{
-		WriteTimeout: cfg.Listen.WriteTimeout,
-		ReadTimeout:  cfg.Listen.ReadTimeout,
-		IdleTimeout:  cfg.Listen.IDLETimeout,
-		ErrorHandler: web.ErrorHandler,
-	})
-
-	web.SetupRoutes(app, psqlConn, log)
+	fiberConfig := utils.FiberConfig(cfg)
+	app := fiber.New(fiberConfig)
+	infra_web.SetupRoutes(app, psqlConn, log)
 
 	go func() {
 		log.Infof("Server starting on port: %s", cfg.Listen.Port)
 		err := app.Listen(":" + cfg.Listen.Port)
 
 		if err != nil && err != http.ErrServerClosed {
-			log.Errorf(err.Error())
+			log.Errorf("error server close: %s", err.Error())
 		}
 	}()
 
@@ -49,7 +45,6 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Infof("Shutting down server...")
-
 	shutdownCh := make(chan struct{})
 	go func() {
 		if err := app.Shutdown(); err != nil {
@@ -64,5 +59,4 @@ func main() {
 	case <-time.After(5 * time.Second):
 		log.Errorf("Server shutdown timed out, forcing exit")
 	}
-
 }

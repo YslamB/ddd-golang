@@ -10,7 +10,7 @@ import (
 )
 
 type Config struct {
-	IsDebug bool    `yaml:"is_debug" env-required:"true"`
+	IsDebug *bool   `yaml:"is_debug" env-required:"true"`
 	Listen  Listen  `yaml:"listen"`
 	Storage Storage `yaml:"storage"`
 	Log     Log     `yaml:"log"`
@@ -27,8 +27,8 @@ type Listen struct {
 }
 
 type Storage struct {
-	Psql       Psql `yaml:"psql"`
-	MemoryRepo bool `yaml:"memory_repo" env-required:"true"`
+	Psql       Psql  `yaml:"psql"`
+	MemoryRepo *bool `yaml:"memory_repo" env-required:"true"`
 }
 
 type Psql struct {

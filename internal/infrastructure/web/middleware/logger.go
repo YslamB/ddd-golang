@@ -1,12 +1,12 @@
 package middleware
 
 import (
-	"gddd/internal/infrastructure/logging"
+	infra_logging "gddd/internal/infrastructure/logging"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func Logger(zlog *logging.Logger) fiber.Handler {
+func Logger(zlog *infra_logging.Logger) fiber.Handler {
 
 	return func(c *fiber.Ctx) error {
 		err := c.Next()

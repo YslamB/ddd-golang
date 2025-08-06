@@ -1,8 +1,6 @@
-package web
+package utils
 
 import (
-	"gddd/internal/shared/utils"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -15,5 +13,5 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 		message = e.Message
 	}
 
-	return utils.ErrorResponse(c, code, message)
+	return ErrorResponse(c, code, message)
 }

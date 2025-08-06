@@ -7,7 +7,7 @@ import (
 	"gddd/internal/application/user/dtos"
 	domain_common "gddd/internal/domain/common"
 	domain_user "gddd/internal/domain/user"
-	"gddd/internal/infrastructure/logging"
+	infra_logging "gddd/internal/infrastructure/logging"
 	shared_validation "gddd/internal/shared/validation"
 
 	"github.com/google/uuid"
@@ -15,10 +15,10 @@ import (
 
 type Service struct {
 	userRepo domain_user.Repository
-	logger   *logging.Logger
+	logger   *infra_logging.Logger
 }
 
-func NewService(userRepo domain_user.Repository, log *logging.Logger) *Service {
+func NewService(userRepo domain_user.Repository, log *infra_logging.Logger) *Service {
 	return &Service{userRepo: userRepo, logger: log}
 }
 

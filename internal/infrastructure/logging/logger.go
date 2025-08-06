@@ -2,7 +2,7 @@ package logging
 
 import (
 	"fmt"
-	"gddd/internal/infrastructure/config"
+	infra_config "gddd/internal/infrastructure/config"
 	"io"
 	"log"
 	"os"
@@ -44,9 +44,9 @@ type Logger struct {
 	minLevel LogLevel
 }
 
-func InitLogger(cfg *config.Config) *Logger {
+func InitLogger(cfg *infra_config.Config) *Logger {
 	var logOutput io.Writer
-	if cfg.IsDebug {
+	if *cfg.IsDebug {
 		logOutput = os.Stdout
 		fmt.Println("Application running in DEBUG mode. Logs will be printed to terminal.")
 	} else {
@@ -56,16 +56,13 @@ func InitLogger(cfg *config.Config) *Logger {
 		}
 
 		logFile, err := os.OpenFile(fmt.Sprintf("%s/%s", cfg.Log.Path, cfg.Log.Filename), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+
 		if err != nil {
 			log.Fatalf("Failed to open log file: %v", err)
 		}
-		defer func() {
-			if err := logFile.Close(); err != nil {
-				log.Printf("Error closing log file: %v", err)
-			}
-		}()
+
 		logOutput = logFile
-		fmt.Println("Application running in RELEASE mode. Logs will be written to 'logs/app.log'.")
+		fmt.Printf("Application running in RELEASE mode. Logs will be written to '%s/%s'.\n", cfg.Log.Path, cfg.Log.Filename)
 	}
 
 	return NewLogger(logOutput)
@@ -127,5 +124,4 @@ func (l *Logger) Errorf(format string, v ...interface{}) {
 
 func (l *Logger) Fatalf(format string, v ...interface{}) {
 	l.logf(LevelFatal, format, v...)
-
 }

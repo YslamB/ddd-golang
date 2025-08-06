@@ -7,17 +7,16 @@ import (
 
 	domain_common "gddd/internal/domain/common"
 	domain_user "gddd/internal/domain/user" // Import domain package
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	db "gddd/pkg/database"
 )
 
 // PostgresUserRepository implements user.Repository for PostgreSQL.
 type PostgresUserRepository struct {
-	db *pgxpool.Pool
+	db *db.Database
 }
 
 // NewPostgresUserRepository creates a new Postgres user repository.
-func NewPostgresUserRepository(db *pgxpool.Pool) *PostgresUserRepository {
+func NewPostgresUserRepository(db *db.Database) *PostgresUserRepository {
 	return &PostgresUserRepository{db: db}
 }
 

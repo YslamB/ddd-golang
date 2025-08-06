@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/jackc/pgx/v5"
@@ -29,15 +28,15 @@ type Database struct {
 	pool *pgxpool.Pool
 }
 
-func NewDB(ctx context.Context, cfg *pgxpool.Config) (*Database, error) {
-	pool, err := pgxpool.NewWithConfig(ctx, cfg)
+func NewDB(ctx *context.Context, cfg *pgxpool.Config) (*Database, error) {
+	pool, err := pgxpool.NewWithConfig(*ctx, cfg)
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating pgx pool: %w", err)
+		return nil, err
 	}
 
-	if err := pool.Ping(ctx); err != nil {
-		return nil, fmt.Errorf("error pinging database: %w", err)
+	if err := pool.Ping(*ctx); err != nil {
+		return nil, err
 	}
 
 	return &Database{pool: pool}, nil
@@ -55,7 +54,7 @@ func (d *Database) Exec(ctx context.Context, query string, args ...any) (pgconn.
 	result, err := d.pool.Exec(ctx, query, args...)
 
 	if err != nil {
-		return pgconn.CommandTag{}, fmt.Errorf("executing query error: %w", err)
+		return pgconn.CommandTag{}, err
 	}
 
 	if result.RowsAffected() == 0 {

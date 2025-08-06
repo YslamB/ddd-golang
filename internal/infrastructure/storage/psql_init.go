@@ -3,16 +3,16 @@ package storage
 import (
 	"context"
 	"fmt"
-	"gddd/internal/infrastructure/config"
+	infra_config "gddd/internal/infrastructure/config"
+	infra_logging "gddd/internal/infrastructure/logging"
 	db "gddd/pkg/database"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/lib/pq"
 )
 
-func PostgresInit(cfg *config.Config) *pgxpool.Pool {
+func PostgresInit(ctx *context.Context, cfg *infra_config.Config, log *infra_logging.Logger) *db.Database {
 	connectionString := buildConnectionString(cfg)
 	pgxConfig, err := pgxpool.ParseConfig(connectionString)
 
@@ -22,27 +22,16 @@ func PostgresInit(cfg *config.Config) *pgxpool.Pool {
 
 	pgxConfig.MaxConns = cfg.Storage.Psql.MaxConnectionPoolSize
 	pgxConfig.MaxConnLifetime = time.Duration(cfg.Storage.Psql.MaxConnectionLifetimeMinutes)
-	_, err = db.NewDB(context.Background(), pgxConfig)
+	pool, err := db.NewDB(ctx, pgxConfig)
 
 	if err != nil {
-		log.Fatalf("❌ Could not create database connection pool: %v\n", err)
+		log.Fatalf("❌ not connect to db: %v\n", err)
 	}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), pgxConfig)
-
-	if err != nil {
-		log.Fatalf("failed to create connection poolpool🏊: %v\n", err)
-	}
-
-	if err = pool.Ping(context.Background()); err != nil {
-		panic(fmt.Sprintf("❌ Could not ping postgres🫙 database: %v", err))
-	}
-
-	log.Println("✅ Database connection pool initialized successfully")
 	return pool
 }
 
-func buildConnectionString(cfg *config.Config) string {
+func buildConnectionString(cfg *infra_config.Config) string {
 	return fmt.Sprintf(
 		"user=%s password=%s host=%s port=%s dbname=%s sslmode=disable",
 		cfg.Storage.Psql.Username, cfg.Storage.Psql.Password,
