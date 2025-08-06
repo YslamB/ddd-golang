@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"gddd/internal/infrastructure/config"
+	infra_config "gddd/internal/infrastructure/config"
 	infra_logging "gddd/internal/infrastructure/logging"
 	infra_store "gddd/internal/infrastructure/storage"
 	infra_web "gddd/internal/infrastructure/web"
-	"gddd/internal/shared/utils"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,14 +16,13 @@ import (
 )
 
 func main() {
-	cfg := config.Init()
+	cfg := infra_config.Init()
 	log := infra_logging.InitLogger(cfg)
 	ctxTimeOut, cancel := context.WithTimeout(context.Background(), cfg.Listen.DBCtxTimeout)
 	psqlConn := infra_store.PostgresInit(&ctxTimeOut, cfg, log)
 	defer cancel()
 	defer psqlConn.Close()
-	fiberConfig := utils.FiberConfig(cfg)
-	app := fiber.New(fiberConfig)
+	app := fiber.New(cfg.FiberConfig)
 	infra_web.SetupRoutes(app, psqlConn, log)
 
 	go func() {

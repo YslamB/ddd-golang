@@ -3,7 +3,7 @@ package web
 import (
 	app_user "gddd/internal/application/user"
 	infra_logging "gddd/internal/infrastructure/logging"
-	infra_postgres "gddd/internal/infrastructure/persistence/postgres" // For Postgres repos
+	infra_postgres "gddd/internal/infrastructure/persistence/postgres"
 	"gddd/internal/infrastructure/web/middleware"
 	http_interfaces "gddd/internal/interfaces/http"
 	db "gddd/pkg/database"

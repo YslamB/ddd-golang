@@ -6,14 +6,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	IsDebug *bool   `yaml:"is_debug" env-required:"true"`
-	Listen  Listen  `yaml:"listen"`
-	Storage Storage `yaml:"storage"`
-	Log     Log     `yaml:"log"`
+	IsDebug     *bool   `yaml:"is_debug" env-required:"true"`
+	Listen      Listen  `yaml:"listen"`
+	Storage     Storage `yaml:"storage"`
+	Log         Log     `yaml:"log"`
+	FiberConfig fiber.Config
 }
 
 type Listen struct {
@@ -81,5 +83,6 @@ func Init() *Config {
 			log.Fatal(err)
 		}
 	})
+	instance.FiberConfig = FiberConfig(instance)
 	return instance
 }

@@ -2,25 +2,22 @@ package http
 
 import (
 	app_product "gddd/internal/application/product"
-	"gddd/internal/application/product/dtos" // Import DTOs
+	"gddd/internal/application/product/dtos"
 	domain_common "gddd/internal/domain/common"
 	infra_logging "gddd/internal/infrastructure/logging"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// ProductHandler handles HTTP requests for product-related operations.
 type ProductHandler struct {
 	productService *app_product.Service
 	logger         *infra_logging.Logger
 }
 
-// NewProductHandler creates a new ProductHandler instance.
 func NewProductHandler(productService *app_product.Service, logger *infra_logging.Logger) *ProductHandler {
 	return &ProductHandler{productService: productService, logger: logger}
 }
 
-// CreateProduct handles POST /api/v1/products requests.
 func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	h.logger.Infof("Received CreateProduct request from %s", c.IP())
 
@@ -47,7 +44,6 @@ func (h *ProductHandler) CreateProduct(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(productResp)
 }
 
-// GetProductByID handles GET /api/v1/products/:id requests.
 func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
 	productID := c.Params("id")
 	h.logger.Infof("Received GetProductByID request for ID: %s from %s", productID, c.IP())
@@ -67,7 +63,6 @@ func (h *ProductHandler) GetProductByID(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(productResp)
 }
 
-// UpdateProduct handles PUT /api/v1/products/:id requests.
 func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 	productID := c.Params("id")
 	h.logger.Infof("Received UpdateProduct request for ID: %s from %s", productID, c.IP())
@@ -97,7 +92,6 @@ func (h *ProductHandler) UpdateProduct(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(productResp)
 }
 
-// DeleteProduct handles DELETE /api/v1/products/:id requests.
 func (h *ProductHandler) DeleteProduct(c *fiber.Ctx) error {
 	productID := c.Params("id")
 	h.logger.Infof("Received DeleteProduct request for ID: %s from %s", productID, c.IP())
@@ -114,5 +108,5 @@ func (h *ProductHandler) DeleteProduct(c *fiber.Ctx) error {
 	}
 
 	h.logger.Infof("Product %s deleted successfully.", productID)
-	return c.Status(fiber.StatusNoContent).SendString("") // No content for successful deletion
+	return c.Status(fiber.StatusNoContent).SendString("")
 }

@@ -9,20 +9,17 @@ import (
 	domain_product "gddd/internal/domain/product"
 )
 
-// InMemoryProductRepository implements product.Repository for in-memory storage.
 type InMemoryProductRepository struct {
 	mu       sync.RWMutex
 	products map[domain_product.ProductID]*domain_product.Product
 }
 
-// NewInMemoryProductRepository creates a new in-memory product repository.
 func NewInMemoryProductRepository() *InMemoryProductRepository {
 	return &InMemoryProductRepository{
 		products: make(map[domain_product.ProductID]*domain_product.Product),
 	}
 }
 
-// Save implements product.Repository.Save.
 func (r *InMemoryProductRepository) Save(ctx context.Context, p *domain_product.Product) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -30,7 +27,6 @@ func (r *InMemoryProductRepository) Save(ctx context.Context, p *domain_product.
 	return nil
 }
 
-// FindByID implements product.Repository.FindByID.
 func (r *InMemoryProductRepository) FindByID(ctx context.Context, id domain_product.ProductID) (*domain_product.Product, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -42,7 +38,6 @@ func (r *InMemoryProductRepository) FindByID(ctx context.Context, id domain_prod
 	return &copiedProduct, nil
 }
 
-// FindBySKU implements product.Repository.FindBySKU.
 func (r *InMemoryProductRepository) FindBySKU(ctx context.Context, sku string) (*domain_product.Product, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -55,7 +50,6 @@ func (r *InMemoryProductRepository) FindBySKU(ctx context.Context, sku string) (
 	return nil, domain_common.NewNotFoundError(fmt.Sprintf("product with SKU %s not found", sku))
 }
 
-// Delete implements product.Repository.Delete.
 func (r *InMemoryProductRepository) Delete(ctx context.Context, id domain_product.ProductID) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

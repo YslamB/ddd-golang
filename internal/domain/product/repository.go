@@ -2,7 +2,6 @@ package product
 
 import "context"
 
-// Repository defines the interface for Product persistence operations.
 type Repository interface {
 	Save(ctx context.Context, product *Product) error
 	FindByID(ctx context.Context, id ProductID) (*Product, error)

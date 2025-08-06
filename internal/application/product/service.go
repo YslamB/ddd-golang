@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"gddd/internal/application/product/dtos" // Import DTOs
+	"gddd/internal/application/product/dtos"
 	domain_common "gddd/internal/domain/common"
-	domain_product "gddd/internal/domain/product" // Import domain package
+	domain_product "gddd/internal/domain/product"
 	infra_logging "gddd/internal/infrastructure/logging"
 	shared_validation "gddd/internal/shared/validation"
 
 	"github.com/google/uuid"
 )
 
-// ProductRepository defines the interface for the product repository,
-// used by the application service.
 type ProductRepository interface {
 	Save(ctx context.Context, product *domain_product.Product) error
 	FindByID(ctx context.Context, id domain_product.ProductID) (*domain_product.Product, error)
@@ -22,18 +20,15 @@ type ProductRepository interface {
 	Delete(ctx context.Context, id domain_product.ProductID) error
 }
 
-// Service defines the application service for product-related operations.
 type Service struct {
 	productRepo ProductRepository
 	logger      *infra_logging.Logger
 }
 
-// NewService creates a new product application service.
 func NewService(productRepo ProductRepository, logger *infra_logging.Logger) *Service {
 	return &Service{productRepo: productRepo, logger: logger}
 }
 
-// CreateProduct handles the product creation use case.
 func (s *Service) CreateProduct(ctx context.Context, req dtos.CreateProductRequest) (*dtos.ProductResponse, error) {
 	s.logger.Infof("Attempting to create product with SKU: %s", req.SKU)
 
@@ -76,7 +71,6 @@ func (s *Service) CreateProduct(ctx context.Context, req dtos.CreateProductReque
 	}, nil
 }
 
-// GetProductByID handles retrieving a product by ID use case.
 func (s *Service) GetProductByID(ctx context.Context, id string) (*dtos.ProductResponse, error) {
 	s.logger.Infof("Attempting to get product by ID: %s", id)
 
@@ -103,7 +97,6 @@ func (s *Service) GetProductByID(ctx context.Context, id string) (*dtos.ProductR
 	}, nil
 }
 
-// UpdateProduct handles updating a product's details use case.
 func (s *Service) UpdateProduct(ctx context.Context, id string, req dtos.UpdateProductRequest) (*dtos.ProductResponse, error) {
 	s.logger.Infof("Attempting to update product %s", id)
 
@@ -145,7 +138,6 @@ func (s *Service) UpdateProduct(ctx context.Context, id string, req dtos.UpdateP
 	}, nil
 }
 
-// DeleteProduct handles deleting a product use case.
 func (s *Service) DeleteProduct(ctx context.Context, id string) error {
 	s.logger.Infof("Attempting to delete product: %s", id)
 

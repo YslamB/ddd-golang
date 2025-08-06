@@ -1,16 +1,16 @@
-package utils
+package config
 
 import (
-	infra_config "gddd/internal/infrastructure/config"
+	"gddd/internal/shared/utils"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-func FiberConfig(cfg *infra_config.Config) fiber.Config {
+func FiberConfig(cfg *Config) fiber.Config {
 	return fiber.Config{
 		WriteTimeout: cfg.Listen.WriteTimeout,
 		ReadTimeout:  cfg.Listen.ReadTimeout,
 		IdleTimeout:  cfg.Listen.IDLETimeout,
-		ErrorHandler: ErrorHandler,
+		ErrorHandler: utils.ErrorHandler,
 	}
 }
